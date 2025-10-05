@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SAG 2.1 - Sistema de Análise de Pareceres</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family: "Segoe UI", sans-serif; }
+
+  :root {
+    --gradient-start: #4f8ef7;
+    --gradient-end: #38b000;
+    --primary-blue: #4f8ef7;
+    --primary-green: #38b000;
+    --white: #ffffff;
+    --gray-bg: #f4f6f8;
+    --text-dark: #333;
+  }
+
+  body, html { height:100%; background: var(--gray-bg); }
+
+  /* SPLASH */
+  #splash {
+    position:fixed; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    color:#fff; font-size:2.5em; font-weight:600; letter-spacing:1px;
+  }
+
+  /* CONTAINER */
+  .container {
+    display:none;
+    min-height:100vh;
+    align-items:center; justify-content:center;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+  }
+
+  form {
+    background:#fff; padding:2rem; border-radius:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.15);
+    width:90%; max-width:400px;
+  }
+
+  h2 { color: var(--primary-blue); text-align:center; margin-bottom:1rem; }
+
+  label { display:block; margin-top:0.8rem; margin-bottom:0.3rem; font-weight:600; color:#444; }
+  input[type="text"], input[type="email"], input[type="password"] {
+    width:100%; padding:0.6rem; border:1px solid #ccc; border-radius:6px;
+  }
+
+  button {
+    width:100%; padding:0.8rem; margin-top:1rem;
+    border:none; border-radius:6px; font-weight:bold;
+    cursor:pointer; transition:0.3s;
+  }
+
+  .btn-login { background: var(--primary-green); color: var(--white); }
+  .btn-login:hover { background: #2e7d00; }
+  .btn-blue { background: var(--primary-blue); color: var(--white); }
+  .btn-blue:hover { background:#356cd1; }
+
+  .link { color: var(--primary-blue); cursor:pointer; font-size:0.9rem; text-decoration:underline; }
+  .flex-between { display:flex; justify-content:space-between; margin-top:0.5rem; }
+
+  /* DASHBOARD */
+  #dashboard { display:none; padding:2rem; }
+  #dashboard h1 { color: var(--primary-blue); margin-bottom:1.5rem; }
+  .section { background:#fff; padding:1.2rem; margin-bottom:1rem; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+
+  .section h2 { margin-bottom:0.5rem; color:var(--text-dark); }
+
+  /* TEXTAREA PERSONALIZADO */
+  textarea {
+    width:100%; min-height:150px; resize:vertical;
+    border:1px solid #ccc; border-radius:8px; padding:0.8rem;
+    font-family: "Segoe UI", sans-serif; font-size:1rem;
+    transition: all 0.3s ease;
+  }
+  textarea:focus {
+    outline:none; border-color: var(--primary-blue);
+    box-shadow: 0 0 6px rgba(79,142,247,0.4);
+  }
+
+  /* RESULTADO */
+  #analysisResult {
+    display:none;
+    background:#fefefe; border:1px solid #ddd; padding:1rem;
+    border-radius:10px; margin-top:1rem; line-height:1.5;
+  }
+
+  /* ALERTAS */
+  .alert {
+    background:#e8f5e9; color:#2e7d32; border:1px solid #81c784;
+    padding:0.8rem; border-radius:6px; margin-bottom:1rem; display:none;
+  }
+  .alert.error { background:#ffebee; color:#c62828; border:1px solid #ef5350; }
+
+  /* LOADER */
+  .loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary-blue);
+    border-radius: 50%;
+    width: 30px; height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">Bem-vindo(a) ao SAG 2.1</div>
+
+<!-- LOGIN -->
+<div id="login" class="container">
+  <form id="loginForm">
+    <h2>Login</h2>
+    <div class="alert error" id="loginAlert">Email ou senha incorretos.</div>
+    <label>Email</label>
+    <input type="email" id="loginEmail" required>
+    <label>Senha</label>
+    <input type="password" id="loginPassword" required>
+    <button type="submit" class="btn-login">Entrar</button>
+    <div class="flex-between">
+      <span class="link" onclick="showRegister()">Não sou cadastrado</span>
+      <span class="link">Esqueci minha senha</span>
+    </div>
+  </form>
+</div>
+
+<!-- REGISTER -->
+<div id="register" class="container">
+  <form id="registerForm">
+    <h2>Cadastro</h2>
+    <div class="alert error" id="regAlert"></div>
+    <label>Nome de Usuário</label>
+    <input type="text" id="username" required>
+    <label>Email</label>
+    <input type="email" id="regEmail" required>
+    <label>Senha</label>
+    <input type="password" id="regPassword" required>
+    <label>Confirmar Senha</label>
+    <input type="password" id="regConfirmPassword" required>
+    <button type="submit" class="btn-login">Registrar</button>
+    <div class="flex-between">
+      <span class="link" onclick="showLogin()">Já sou cadastrado</span>
+    </div>
+  </form>
+</div>
+
+<!-- DASHBOARD -->
+<div id="dashboard">
+  <h1>📊 Painel do SAG 2.1</h1>
+
+  <div class="section">
+    <h2>🧾 Inserir ou colar o Parecer</h2>
+    <textarea id="parecerText" placeholder="Cole ou digite o texto do parecer aqui..."></textarea>
+    <button class="btn-blue" onclick="analyzeText()">Analisar Parecer</button>
+
+    <div id="loading" style="display:none; margin-top:1rem;">
+      <div class="loader"></div>
+      <p style="text-align:center; color:#555; margin-top:0.5rem;">Analisando texto...</p>
+    </div>
+
+    <div id="analysisResult"></div>
+  </div>
+
+  <div class="section">
+    <h2>🚪 Encerrar Sessão</h2>
+    <button class="btn-login" onclick="logout()">Sair</button>
+  </div>
+</div>
+
+<script>
+  // SPLASH
+  setTimeout(() => {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('login').style.display = 'flex';
+  }, 3000);
+
+  function showRegister() {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('register').style.display = 'flex';
+  }
+
+  function showLogin() {
+    document.getElementById('register').style.display = 'none';
+    document.getElementById('login').style.display = 'flex';
+  }
+
+  function showDashboard() {
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('register').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+  }
+
+  // REGISTRO
+  document.getElementById('registerForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+    const confirm = document.getElementById('regConfirmPassword').value;
+    const alertBox = document.getElementById('regAlert');
+
+    if(password !== confirm){
+      alertBox.textContent = "❌ As senhas não conferem!";
+      alertBox.style.display = 'block';
+      return;
+    }
+
+    let users = JSON.parse(localStorage.getItem('users')) || [];
+    if(users.some(u => u.email === email)){
+      alertBox.textContent = "⚠️ Este email já está cadastrado!";
+      alertBox.style.display = 'block';
+      return;
+    }
+
+    users.push({ username, email, password });
+    localStorage.setItem('users', JSON.stringify(users));
+    alert("✅ Cadastro realizado com sucesso!");
+    showLogin();
+  });
+
+  // LOGIN
+  document.getElementById('loginForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const email = document.getElementById('loginEmail').value;
+    const password = document.getElementById('loginPassword').value;
+    const users = JSON.parse(localStorage.getItem('users')) || [];
+    const alertBox = document.getElementById('loginAlert');
+
+    const user = users.find(u => u.email === email && u.password === password);
+    if(user){
+      localStorage.setItem('loggedUser', JSON.stringify(user));
+      showDashboard();
+    } else {
+      alertBox.style.display = 'block';
+    }
+  });
+
+  // LOGOUT
+  function logout(){
+    localStorage.removeItem('loggedUser');
+    document.getElementById('dashboard').style.display = 'none';
+    document.getElementById('login').style.display = 'flex';
+  }
+
+  // SIMULAÇÃO DE ANÁLISE DE TEXTO
+  function analyzeText(){
+    const text = document.getElementById('parecerText').value.trim();
+    const resultDiv = document.getElementById('analysisResult');
+    const loader = document.getElementById('loading');
+
+    if(!text){
+      alert("Por favor, insira ou cole o texto do parecer.");
+      return;
+    }
+
+    // Mostra loader
+    resultDiv.style.display = 'none';
+    loader.style.display = 'block';
+
+    // Simula tempo de "análise"
+    setTimeout(() => {
+      loader.style.display = 'none';
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `
+        <h3>📋 Relatório de Análise Automatizada</h3>
+        <p><b>Resumo:</b> O parecer analisado contém ${text.split(" ").length} palavras e aborda questões técnicas e interpretativas relevantes.</p>
+        <p><b>Pontos Críticos:</b> Foram identificadas possíveis ambiguidades jurídicas e falta de fundamentação em alguns trechos.</p>
+        <p><b>Sugestões:</b> Recomenda-se revisão do embasamento legal e reforço da argumentação em relação aos precedentes citados.</p>
+        <p><b>Conclusão:</b> O parecer apresenta boa estrutura geral, mas pode ser aprimorado em clareza e consistência técnica.</p>
+        <hr>
+        <p style="color:#888; font-size:0.9rem;">⚙️ Esta é uma análise simulada. Para integração com IA real, conecte uma API de linguagem natural (ex: GPT).</p>
+      `;
+    }, 2000);
+  }
+</script>
+</body>
+</html>
