@@ -18,6 +18,23 @@
   }
 
   body, html { height:100%; background: var(--gray-bg); }
+  
+  #dashboard{padding: 2rem; max-width: 900px;margin: auto;}
+  .section {background: #fff; padding: 1.5rem; margin-bottom: 1.2rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);}
+
+  h1 { color: var(--primary-blue); margin-bottom: 1rem;}
+  h2 {margin-bottom: 0.5rem;}
+
+  textarea {width: 100%; min-height: 150px; resize: vertical; border: 1px solid #ccc; border-radius: 8px; padding: 0.8rem; font-family: "Segoe UI", sans-serif; font-size: 1rem; }
+
+  button {background: var(--primary-blue); color: #fff;
+  padding: 0.8rem 1.2rem; border: none; border-radius: 6px;
+  margin-top: 0.8rem; cursor: pointer; font-weight: bold;}
+
+  button:hover { background: #356cd1; }
+
+  #analysisResult { background: #fff; border: 1px solid #ddd; padding: 1rem;
+  border-radius: 10px; margin-top: 1rem; display: none;}
 
   /* SPLASH */
   #splash {
@@ -102,7 +119,7 @@
     border-radius: 50%;
     width: 30px; height: 30px;
     animation: spin 1s linear infinite;
-    margin: 0 auto;
+    margin: 1rem auto;
   }
   @keyframes spin {
     0% { transform: rotate(0deg); }
@@ -159,9 +176,9 @@
   <div class="section">
     <h2>🧾 Inserir ou colar o Parecer</h2>
     <textarea id="parecerText" placeholder="Cole ou digite o texto do parecer aqui..."></textarea>
-    <button class="btn-blue" onclick="analyzeText()">Analisar Parecer</button>
+    <button onclick="analyzeText()">Analisar Parecer</button>
 
-    <div id="loading" style="display:none; margin-top:1rem;">
+    <div id="loading" style="display:none">
       <div class="loader"></div>
       <p style="text-align:center; color:#555; margin-top:0.5rem;">Analisando texto...</p>
     </div>
@@ -176,6 +193,37 @@
 </div>
 
 <script>
+  async function analyzeText() {
+    const text = document.getElementById('parecerText').value.trim();
+    const resultDiv = document.getElementById('analysisResult');
+    const loader = document.getElementById('loading');
+
+    if (!text) {
+      alert("Por favor, insira ou cole o texto do parecer.");
+      return;
+    }
+
+    resultDiv.style.display = 'none';
+    loader.style.display = 'block';
+
+    try {
+     const response = await fetch("http://127.0.0.1:5000/analyze",{
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text })
+     });
+
+     const data = await response.json();
+
+      loader.style.display = 'none';
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `<h3>📋 Relatório de Análise Automatizada</h3><p>${data.analysis}</p>`;
+    } catch (error) {
+      loader.style.display = 'none';
+      alert("Erro ao conectar com o servidor de IA.");
+      console.error(error);  
+    }
+  }
   // SPLASH
   setTimeout(() => {
     document.getElementById('splash').style.display = 'none';
